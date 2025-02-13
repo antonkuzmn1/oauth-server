@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from app.api.admins import router as admins_router
 from app.api.companies import router as companies_router
 from app.api.users import router as users_router
-from app.core.config import settings
+from app.core.settings import settings
 
 app = FastAPI()
 
