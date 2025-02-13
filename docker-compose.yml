@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  fastapi:
+    image: antonkuzmn1/oauth-server
+    env_file:
+      - .env
+    container_name: oauth-server
+    build: .
+    ports:
+      - "3002:80"
+    restart: always
