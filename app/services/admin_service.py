@@ -48,36 +48,6 @@ class AdminService(BaseService):
         logger.info(f"Updated admin: {admin.id} - {admin.username}")
         return self.schema_out.from_orm(admin)
 
-    def create_m2m_admin_company(self, admin_id: int, company_id: int) -> Optional[AdminOut]:
-        admin = self.repository.get_by_id(admin_id)
-        company = CompanyService(self.db).get_by_id(company_id)
-        if admin and company:
-            admin.companies.append(company)
-            self.db.commit()
-            self.db.refresh(admin)
-            logger.info(f"Admin {admin.username} related to company: {company.id} - {company.name}")
-            return self.schema_out.from_orm(admin)
-        else:
-            logger.warning("Admin or company not found")
-            return None
-
-    def remove_m2m_admin_company(self, admin_id: int, company_id: int) -> Optional[AdminOut]:
-        admin = self.repository.get_by_id(admin_id)
-        company = CompanyService(self.db).get_by_id(company_id)
-        if admin and company:
-            if company in admin.companies:
-                admin.companies.remove(company)
-                self.db.commit()
-                self.db.refresh(admin)
-                logger.info(f"Admin {admin.username} removed from company: {company.id} - {company.name}")
-                return self.schema_out.from_orm(admin)
-            else:
-                logger.warning("Admin in company not found")
-                return None
-        else:
-            logger.warning("Admin or company not found")
-            return None
-
     def authenticate_admin(self, username: str, password: str):
         admin = self.repository.get_by_username(username)
         if not admin or not auth_service.verify_password(password, admin.hashed_password):

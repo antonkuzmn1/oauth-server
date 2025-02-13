@@ -1,60 +1,45 @@
-from typing import List, Optional, Type, TypeVar, cast
+from typing import Type, TypeVar, Generic, Optional
 from sqlalchemy.orm import Session
-from app.utils.logger import logger
+from sqlalchemy import select, cast, Boolean
+from app.models import Base
 
-T = TypeVar("T")
-SchemaBase = TypeVar("SchemaBase")
+T = TypeVar("T", bound=Base)
 
 
-class BaseRepository:
+class BaseRepository(Generic[T]):
     def __init__(self, db: Session, model: Type[T]):
         self.db = db
         self.model = model
 
-    def get_all(self) -> List[T]:
-        return self.db.query(self.model).all()
+    def get_by_id(self, item_id: int) -> Optional[T]:
+        return self.db.scalar(select(self.model).where(
+            cast(self.model.id, Boolean) == item_id,
+            cast(self.model.deleted, Boolean) == False))
 
-    def get_by_username(self, username: str) -> Optional[T]:
-        return self.db.query(self.model).filter(
-            cast("ColumnElement[bool]", self.model.username == username)
-        ).first()
-
-    def get_by_id(self, record_id: int) -> Optional[T]:
-        return self.db.query(self.model).filter(
-            cast("ColumnElement[bool]", self.model.id == record_id)
-        ).first()
-
-    def create(self, data: SchemaBase) -> T:
-        new_record = self.model(**data.dict())
-        self.db.add(new_record)
+    def create(self, item_data: dict) -> T:
+        item = self.model(**item_data)
+        self.db.add(item)
         self.db.commit()
-        self.db.refresh(new_record)
-        logger.info(f"Created new {self.model.__name__}: {new_record.id}")
-        return new_record
+        self.db.refresh(item)
+        return item
 
-    def update(self, record_id: int, data: SchemaBase) -> Optional[T]:
-        record = self.get_by_id(record_id)
-        if not record:
-            logger.warning(f"Attempt to update non-existent {self.model.__name__}: {record_id}")
+    def update(self, item_id: int, item_data: dict) -> Optional[T]:
+        item = self.get_by_id(item_id)
+        if not item:
             return None
 
-        update_data = data.dict(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(record, key, value)
+        for key, value in item_data.items():
+            setattr(item, key, value)
 
         self.db.commit()
-        self.db.refresh(record)
-        logger.info(f"Updated {self.model.__name__}: {record.id}")
-        return record
+        self.db.refresh(item)
+        return item
 
-    def delete(self, record_id: int) -> Optional[T]:
-        record = self.get_by_id(record_id)
-        if not record:
-            logger.warning(f"Attempt to delete non-existent {self.model.__name__}: {record_id}")
+    def delete(self, item_id: int) -> Optional[T]:
+        item = self.get_by_id(item_id)
+        if not item:
             return None
 
-        setattr(record, "deleted", True)
+        item.deleted = True
         self.db.commit()
-        self.db.refresh(record)
-        logger.info(f"{self.model.__name__} marked as deleted: {record.id}")
-        return record
+        return item
