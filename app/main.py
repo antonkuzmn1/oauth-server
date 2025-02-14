@@ -20,8 +20,11 @@ from app.api.companies import router as companies_router
 from app.api.users import router as users_router
 from app.api.owner import router as owner_router
 
+from app.services.auth_service import AuthService
+
 from app.core.settings import settings
 
+auth_service = AuthService()
 app = FastAPI()
 
 app.include_router(admins_router)
@@ -37,3 +40,8 @@ def main():
         "debug": settings.DEBUG,
         "test": 16,
     }
+
+
+@app.post("/token")
+def check_token_endpoint(token: str):
+    return auth_service.verify_token(token)
