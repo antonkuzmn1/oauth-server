@@ -1,14 +1,14 @@
-from typing import List, Optional, Type, TypeVar
+from typing import List, Optional, Type, TypeVar, Generic
 from app.repositories.base_repo import BaseRepository
 
 
-T = TypeVar("T")
+T = TypeVar("T", bound=BaseRepository)
 SchemaOut = TypeVar("SchemaOut")
 SchemaBase = TypeVar("SchemaBase")
 
 
-class BaseService:
-    def __init__(self, repository: BaseRepository, schema_out: Type[SchemaOut]):
+class BaseService(Generic[T]):
+    def __init__(self, repository: T, schema_out: Type[SchemaOut]):
         self.repository = repository
         self.schema_out = schema_out
 

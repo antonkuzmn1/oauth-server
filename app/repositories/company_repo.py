@@ -9,7 +9,3 @@ from app.repositories.base_repo import BaseRepository
 class CompanyRepository(BaseRepository[Company]):
     def __init__(self, db: Session):
         super().__init__(db, Company)
-
-    def get_by_name(self, name: str) -> Optional[Company]:
-        return self.db.scalar(select(Company).where(Company.name == name, Company.deleted == False))
-

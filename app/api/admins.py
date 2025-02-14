@@ -53,23 +53,18 @@ def delete_admin(admin_id: int, db: Session = Depends(get_db)):
 @router.post("/{admin_id}/companies/{company_id}", response_model=AdminOut)
 def create_m2m_admin_company(admin_id: int, company_id: int, db: Session = Depends(get_db)):
     service = AdminService(db)
-    return service.create_m2m_admin_company(admin_id, company_id)
+    return service.add_company_to_admin(admin_id, company_id)
 
 
 @router.delete("/{admin_id}/companies/{company_id}", response_model=AdminOut)
 def remove_m2m_admin_company(admin_id: int, company_id: int, db: Session = Depends(get_db)):
     service = AdminService(db)
-    return service.remove_m2m_admin_company(admin_id, company_id)
+    return service.remove_company_from_admin(admin_id, company_id)
 
 
 @router.post("/login", response_model=Token)
 def login_for_admin_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
     service = AdminService(db)
     admin = service.authenticate_admin(form_data.username, form_data.password)
-    if not admin:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
-        )
-    access_token = AdminService.create_admin_token(admin)
+    access_token = service.create_admin_token(admin)
     return {"access_token": access_token, "token_type": "bearer"}

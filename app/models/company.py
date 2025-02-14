@@ -9,7 +9,7 @@ class Company(Base):
     __tablename__ = 'companies'
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(50), nullable=False)
+    username = Column(String(50), nullable=False)
     description = Column(String(255), nullable=True, default=None)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())

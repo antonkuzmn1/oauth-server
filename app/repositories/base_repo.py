@@ -2,6 +2,8 @@ from typing import Type, TypeVar, Generic, Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import select, cast, Boolean
 from app.models import Base
+from app.utils.logger import logger
+
 
 T = TypeVar("T", bound=Base)
 
@@ -11,8 +13,14 @@ class BaseRepository(Generic[T]):
         self.db = db
         self.model = model
 
+    def get_by_username(self, username: str) -> Optional[T]:
+        return self.db.scalar(select(self.model).where(
+            self.model.username == username,
+            self.model.deleted.is_(False))
+        )
+
     def get_all(self) -> List[T]:
-        return self.db.query(model=self.model).all()
+        return self.db.query(self.model).all()
 
     def get_by_id(self, item_id: int) -> Optional[T]:
         return self.db.scalar(select(self.model).where(
@@ -20,6 +28,7 @@ class BaseRepository(Generic[T]):
             cast(self.model.deleted, Boolean) == False))
 
     def create(self, item_data: dict) -> T:
+        logger.warning("Attempt to create something")
         item = self.model(**item_data)
         self.db.add(item)
         self.db.commit()

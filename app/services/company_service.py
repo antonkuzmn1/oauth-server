@@ -5,7 +5,6 @@ from app.schemas.company import CompanyOut
 from app.services.base_service import BaseService
 
 
-class CompanyService(BaseService):
+class CompanyService(BaseService[CompanyRepository]):
     def __init__(self, db: Session):
-        repo = CompanyRepository(db)
-        super().__init__(repo, CompanyOut)
+        super().__init__(CompanyRepository(db), CompanyOut)
