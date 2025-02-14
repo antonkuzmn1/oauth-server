@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class CompanyBase(BaseModel):
-    name: str
+    username: str
     description: Optional[str] = None
 
 

@@ -15,15 +15,15 @@ from app.services.admin_service import AdminService
 router = APIRouter(prefix="/admins", tags=["Admins"])
 
 
+@router.get("/profile", response_model=AdminOut)
+async def get_admin_profile(current_admin: Annotated[AdminOut, Depends(get_current_admin)]):
+    return current_admin
+
+
 @router.get("/", response_model=List[AdminOut])
 def get_all_admins(db: Session = Depends(get_db)):
     service = AdminService(db)
     return service.get_all()
-
-
-@router.get("/profile", response_model=AdminOut)
-async def get_admin_profile(current_admin: Annotated[AdminOut, Depends(get_current_admin)]):
-    return current_admin
 
 
 @router.get("/{admin_id}", response_model=AdminOut)

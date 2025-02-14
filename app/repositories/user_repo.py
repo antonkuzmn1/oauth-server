@@ -12,7 +12,9 @@ class UserRepository(BaseRepository[User]):
         super().__init__(db, User)
 
     def get_all_users_by_company(self, company_id: int) -> List[User]:
-        return list(self.db.scalars(select(User).where(User.company_id == company_id, User.deleted == False)).all())
+        return list(self.db.scalars(select(User).where(
+            User.company_id == company_id, User.deleted == False
+        )).all())
 
     def get_company_by_user_username(self, username: str) -> Optional[Company]:
         return self.db.scalar(select(User).where(User.username == username, User.deleted == False)).company

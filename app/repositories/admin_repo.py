@@ -14,7 +14,8 @@ class AdminRepository(BaseRepository[Admin]):
     def get_all_admins_by_company(self, company_id: int) -> List[Admin]:
         return list(self.db.scalars(
             select(Admin).join(admin_company_association).where(
-                cast(admin_company_association.c.company_id, Boolean) == company_id)
+                admin_company_association.c.company_id == company_id
+            )
         ).all())
 
     def get_all_companies_by_admin(self, admin_id: int) -> List[Company]:

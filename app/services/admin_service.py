@@ -16,31 +16,27 @@ class AdminService(BaseService[AdminRepository]):
         super().__init__(AdminRepository(db), AdminOut)
 
     def create(self, admin_data: AdminCreate) -> Optional[AdminOut]:
-        hashed_password = auth_service.hash_password(admin_data.password)
+        logger.warning("ADMIN_SERVICE: Attempt to create admin")
 
         admin_data_dict = admin_data.model_dump(exclude={"password"})
-        admin_data_dict['hashed_password'] = hashed_password
+        admin_data_dict['hashed_password'] = auth_service.hash_password(admin_data.password)
 
-        new_admin = self.repository.create(admin_data_dict)
+        return super().create(admin_data_dict)
 
-        logger.info(f"Created new admin: {new_admin.id} - {new_admin.username}")
-        return AdminOut.model_validate(new_admin)
 
     def update(self, admin_id: int, admin_data: AdminUpdate) -> Optional[AdminOut]:
+        logger.warning("ADMIN_SERVICE: Attempt to update admin")
         admin = self.repository.get_by_id(admin_id)
         if not admin:
             logger.warning(f"Attempt to update non-existent admin: {admin_id}")
             return None
 
-        update_data = admin_data.model_dump(exclude_unset=True)
-        if "password" in update_data and update_data["password"]:
-            update_data["hashed_password"] = auth_service.hash_password(update_data["password"])
-            del update_data["password"]
+        updated_admin = admin_data.model_dump(exclude_unset=True)
+        if "password" in updated_admin and updated_admin["password"]:
+            updated_admin["hashed_password"] = auth_service.hash_password(updated_admin["password"])
+            del updated_admin["password"]
 
-        updated_admin = self.repository.update(admin.id, update_data)
-
-        logger.info(f"Updated admin: {admin.id} - {admin.username}")
-        return AdminOut.model_validate(updated_admin)
+        return super().update(admin_id, updated_admin)
 
     def add_company_to_admin(self, admin_id: int, company_id: int) -> Optional[AdminOut]:
         admin = self.repository.add_company_to_admin(admin_id, company_id)

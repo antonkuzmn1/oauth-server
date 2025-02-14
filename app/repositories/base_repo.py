@@ -1,6 +1,6 @@
 from typing import Type, TypeVar, Generic, Optional, List
 from sqlalchemy.orm import Session
-from sqlalchemy import select, cast, Boolean
+from sqlalchemy import select, literal
 from app.models import Base
 from app.utils.logger import logger
 
@@ -24,11 +24,11 @@ class BaseRepository(Generic[T]):
 
     def get_by_id(self, item_id: int) -> Optional[T]:
         return self.db.scalar(select(self.model).where(
-            cast(self.model.id, Boolean) == item_id,
-            cast(self.model.deleted, Boolean) == False))
+            self.model.id == item_id,
+            self.model.deleted.is_(False)))
 
     def create(self, item_data: dict) -> Optional[T]:
-        logger.warning("REPO: Attempt to create something")
+        logger.warning("BASE_REPO: Attempt to create something")
         item = self.model(**item_data)
         self.db.add(item)
         self.db.commit()
@@ -36,7 +36,7 @@ class BaseRepository(Generic[T]):
         return item
 
     def update(self, item_id: int, item_data: dict) -> Optional[T]:
-        logger.warning("REPO: Attempt to update something")
+        logger.warning("BASE_REPO: Attempt to update something")
         item = self.get_by_id(item_id)
         if not item:
             return None
