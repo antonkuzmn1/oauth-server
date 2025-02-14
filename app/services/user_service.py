@@ -11,7 +11,6 @@ class UserService(BaseService[UserRepository]):
     def __init__(self, db: Session):
         super().__init__(UserRepository(db), UserOut)
 
-
     def authenticate_user(self, username: str, password: str):
         user = self.repository.get_by_username(username)
         if not user or user.password != password:

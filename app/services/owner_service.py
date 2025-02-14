@@ -23,5 +23,5 @@ class OwnerService(BaseService[OwnerRepository]):
 
     @classmethod
     def create_owner_token(cls, owner: Owner) -> str:
-        token_data = {"sub": owner, "role": "owner"}
+        token_data = {"sub": owner.username, "role": "owner"}
         return auth_service.create_access_token(token_data)

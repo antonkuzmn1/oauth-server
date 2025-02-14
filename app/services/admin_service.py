@@ -17,12 +17,11 @@ class AdminService(BaseService[AdminRepository]):
 
     def create(self, admin_data: AdminCreate) -> Optional[AdminOut]:
         hashed_password = auth_service.hash_password(admin_data.password)
-        admin_data_dict = admin_data.model_dump(exclude={"password"})
-        new_admin = Admin(**admin_data_dict, hashed_password=hashed_password)
 
-        self.repository.db.add(new_admin)
-        self.repository.db.commit()
-        self.repository.db.refresh(new_admin)
+        admin_data_dict = admin_data.model_dump(exclude={"password"})
+        admin_data_dict['hashed_password'] = hashed_password
+
+        new_admin = self.repository.create(admin_data_dict)
 
         logger.info(f"Created new admin: {new_admin.id} - {new_admin.username}")
         return AdminOut.model_validate(new_admin)
@@ -35,16 +34,13 @@ class AdminService(BaseService[AdminRepository]):
 
         update_data = admin_data.model_dump(exclude_unset=True)
         if "password" in update_data and update_data["password"]:
-            update_data["password"] = auth_service.hash_password(update_data["password"])
+            update_data["hashed_password"] = auth_service.hash_password(update_data["password"])
+            del update_data["password"]
 
-        for key, value in update_data.items():
-            setattr(admin, key, value)
-
-        self.repository.db.commit()
-        self.repository.db.refresh(admin)
+        updated_admin = self.repository.update(admin.id, update_data)
 
         logger.info(f"Updated admin: {admin.id} - {admin.username}")
-        return AdminOut.model_validate(admin)
+        return AdminOut.model_validate(updated_admin)
 
     def add_company_to_admin(self, admin_id: int, company_id: int) -> Optional[AdminOut]:
         admin = self.repository.add_company_to_admin(admin_id, company_id)
@@ -57,10 +53,11 @@ class AdminService(BaseService[AdminRepository]):
     def authenticate_admin(self, username: str, password: str) -> Optional[Admin]:
         admin = self.repository.get_by_username(username)
         if not admin or not auth_service.verify_password(password, admin.hashed_password):
+            logger.warning("Failed to authenticate admin")
             return None
         return admin
 
     @classmethod
     def create_admin_token(cls, admin: Admin) -> str:
-        token_data = {"sub": admin.id, "role": "admin"}
+        token_data = {"sub": admin.username, "role": "admin"}
         return auth_service.create_access_token(token_data)

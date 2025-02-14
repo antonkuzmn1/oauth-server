@@ -3,6 +3,8 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.repositories.admin_repo import AdminRepository
+from app.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
 from app.services.admin_service import AdminService
 from app.services.user_service import UserService
@@ -24,8 +26,8 @@ def get_current_user(token: str = Depends(oauth2_user_scheme), db: Session = Dep
                 detail="Invalid token",
             )
 
-        user_service = UserService(db)
-        user = user_service.get_by_username(username)
+        user_repo = UserRepository(db)
+        user = user_repo.get_by_username(username)
 
         if user is None:
             raise HTTPException(
@@ -51,8 +53,8 @@ def get_current_admin(token: str = Depends(oauth2_admin_scheme), db: Session = D
                 detail="Invalid token",
             )
 
-        admin_service = AdminService(db)
-        admin = admin_service.get_by_username(username)
+        admin_repo = AdminRepository(db)
+        admin = admin_repo.get_by_username(username)
 
         if admin is None:
             raise HTTPException(

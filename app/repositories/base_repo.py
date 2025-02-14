@@ -27,8 +27,8 @@ class BaseRepository(Generic[T]):
             cast(self.model.id, Boolean) == item_id,
             cast(self.model.deleted, Boolean) == False))
 
-    def create(self, item_data: dict) -> T:
-        logger.warning("Attempt to create something")
+    def create(self, item_data: dict) -> Optional[T]:
+        logger.warning("REPO: Attempt to create something")
         item = self.model(**item_data)
         self.db.add(item)
         self.db.commit()
@@ -36,6 +36,7 @@ class BaseRepository(Generic[T]):
         return item
 
     def update(self, item_id: int, item_data: dict) -> Optional[T]:
+        logger.warning("REPO: Attempt to update something")
         item = self.get_by_id(item_id)
         if not item:
             return None
