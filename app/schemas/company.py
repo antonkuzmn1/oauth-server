@@ -8,6 +8,13 @@ class CompanyBase(BaseModel):
     description: Optional[str] = None
 
 
+class CompanyCreate(CompanyBase):
+    pass
+
+
+class CompanyUpdate(CompanyBase):
+    pass
+
 class CompanyOut(CompanyBase):
     id: int
     created_at: Optional[datetime] = None

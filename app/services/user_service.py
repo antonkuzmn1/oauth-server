@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
+from app.repositories.user_repo import UserRepository
 from app.schemas.user import UserOut
 from app.repositories.base_repo import BaseRepository
 from app.services.base_service import BaseService
@@ -8,9 +9,10 @@ from app.services.auth_service import AuthService
 
 class UserService(BaseService):
     def __init__(self, db: Session):
-        repo = BaseRepository(db, User)
+        repo = UserRepository(db)
         super().__init__(repo, UserOut)
         self.db = db
+        self.repository = repo
 
     def authenticate_user(self, username: str, password: str):
         user = self.repository.get_by_username(username)

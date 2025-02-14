@@ -16,12 +16,6 @@ class BaseService:
         records = self.repository.get_all()
         return [self.schema_out.from_orm(record) for record in records]
 
-    def get_by_username(self, username: str) -> Optional[SchemaOut]:
-        record = self.repository.get_by_username(username)
-        if record:
-            return self.schema_out.from_orm(record)
-        return None
-
     def get_by_id(self, record_id: int) -> Optional[SchemaOut]:
         record = self.repository.get_by_id(record_id)
         if record:

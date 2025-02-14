@@ -1,13 +1,12 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 
+from app.repositories.admin_repo import AdminRepository
 from app.utils.logger import logger
 from app.models.admin import Admin
 from app.schemas.admin import AdminCreate, AdminUpdate, AdminOut
 from app.services.auth_service import AuthService
-from app.repositories.base_repo import BaseRepository
 from app.services.base_service import BaseService
-from app.services.company_service import CompanyService
 
 
 auth_service = AuthService()
@@ -15,9 +14,10 @@ auth_service = AuthService()
 
 class AdminService(BaseService):
     def __init__(self, db: Session):
-        repo = BaseRepository(db, Admin)
+        repo = AdminRepository(db)
         super().__init__(repo, AdminOut)
         self.db = db
+        self.repository: AdminRepository = repo
 
     def create(self, admin_data: AdminCreate) -> Optional[AdminOut]:
         hashed_password = auth_service.hash_password(admin_data.password)
@@ -48,13 +48,19 @@ class AdminService(BaseService):
         logger.info(f"Updated admin: {admin.id} - {admin.username}")
         return self.schema_out.from_orm(admin)
 
-    def authenticate_admin(self, username: str, password: str):
+    def add_company_to_admin(self, admin_id: int, company_id: int) -> Optional[AdminOut]:
+        return self.repository.add_company_to_admin(admin_id, company_id)
+
+    def remove_company_from_admin(self, admin_id: int, company_id: int) -> Optional[AdminOut]:
+        return self.repository.remove_company_from_admin(admin_id, company_id)
+
+    def authenticate_admin(self, username: str, password: str) -> Optional[AdminOut]:
         admin = self.repository.get_by_username(username)
         if not admin or not auth_service.verify_password(password, admin.hashed_password):
             return None
         return admin
 
     @classmethod
-    def create_admin_token(cls, admin) -> str:
-        token_data = {"sub": admin.username, "role": "admin"}
+    def create_admin_token(cls, admin: Admin) -> str:
+        token_data = {"sub": admin, "role": "admin"}
         return auth_service.create_access_token(token_data)

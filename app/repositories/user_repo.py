@@ -19,3 +19,6 @@ class UserRepository(BaseRepository[User]):
 
     def get_company_by_user_username(self, username: str) -> Optional[Company]:
         return self.db.scalar(select(User).where(User.username == username, User.deleted == False)).company
+
+    def get_company_by_user(self, user_id: int) -> Optional[Company]:
+        return self.db.scalar(select(User).where(User.id == user_id, User.deleted == False)).company
