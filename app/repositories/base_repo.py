@@ -1,6 +1,8 @@
 from typing import Type, TypeVar, Generic, Optional, List
+
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from sqlalchemy import select, literal
+from sqlalchemy import select
 from app.models import Base
 from app.utils.logger import logger
 
@@ -20,7 +22,7 @@ class BaseRepository(Generic[T]):
         )
 
     def get_all(self) -> List[T]:
-        return self.db.query(self.model).all()
+        return list(self.db.scalars(select(self.model)).all())
 
     def get_by_id(self, item_id: int) -> Optional[T]:
         return self.db.scalar(select(self.model).where(
@@ -30,9 +32,14 @@ class BaseRepository(Generic[T]):
     def create(self, item_data: dict) -> Optional[T]:
         logger.warning("BASE_REPO: Attempt to create something")
         item = self.model(**item_data)
-        self.db.add(item)
-        self.db.commit()
-        self.db.refresh(item)
+        try:
+            self.db.add(item)
+            self.db.commit()
+            self.db.refresh(item)
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating item: {e}")
+            self.db.rollback()
+            return None
         return item
 
     def update(self, item_id: int, item_data: dict) -> Optional[T]:
@@ -44,8 +51,14 @@ class BaseRepository(Generic[T]):
         for key, value in item_data.items():
             setattr(item, key, value)
 
-        self.db.commit()
-        self.db.refresh(item)
+        try:
+            self.db.commit()
+            self.db.refresh(item)
+        except SQLAlchemyError as e:
+            logger.error(f"Error updating item: {e}")
+            self.db.rollback()
+            return None
+
         return item
 
     def delete(self, item_id: int) -> Optional[T]:
@@ -54,5 +67,12 @@ class BaseRepository(Generic[T]):
             return None
 
         item.deleted = True
-        self.db.commit()
+
+        try:
+            self.db.commit()
+        except SQLAlchemyError as e:
+            logger.error(f"Error deleting item: {e}")
+            self.db.rollback()
+            return None
+
         return item

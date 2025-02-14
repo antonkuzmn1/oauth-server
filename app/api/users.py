@@ -44,13 +44,8 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login_for_admin_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
+def login_for_user_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
     service = UserService(db)
     user = service.authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
-        )
     access_token = UserService.create_user_token(user)
     return {"access_token": access_token, "token_type": "bearer"}

@@ -18,6 +18,8 @@ from fastapi import FastAPI
 from app.api.admins import router as admins_router
 from app.api.companies import router as companies_router
 from app.api.users import router as users_router
+from app.api.owner import router as owner_router
+
 from app.core.settings import settings
 
 app = FastAPI()
@@ -25,6 +27,7 @@ app = FastAPI()
 app.include_router(admins_router)
 app.include_router(companies_router)
 app.include_router(users_router)
+app.include_router(owner_router)
 
 
 @app.get("/")
