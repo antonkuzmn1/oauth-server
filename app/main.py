@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from app.api.admins import router as admins_router
 from app.api.companies import router as companies_router
