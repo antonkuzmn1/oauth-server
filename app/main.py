@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from app.api.admins import router as admins_router
@@ -24,8 +25,18 @@ from app.services.auth_service import AuthService
 
 from app.core.settings import settings
 
+from app.utils.startup import startup
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    print("Server started!")
+    startup()
+    yield
+    print("Server stopped!")
+
 auth_service = AuthService()
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(admins_router)
 app.include_router(companies_router)
