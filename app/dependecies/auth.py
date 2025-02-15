@@ -1,71 +1,53 @@
+from typing import Optional
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.repositories.admin_repo import AdminRepository
+from app.repositories.owner_repo import OwnerRepository
 from app.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
-from app.services.admin_service import AdminService
-from app.services.user_service import UserService
 
-
-oauth2_user_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
-oauth2_admin_scheme = OAuth2PasswordBearer(tokenUrl="admins/login")
+oauth2_user_scheme = OAuth2PasswordBearer(tokenUrl="users/login", auto_error=False)
+oauth2_admin_scheme = OAuth2PasswordBearer(tokenUrl="admins/login", auto_error=False)
+oauth2_owner_scheme = OAuth2PasswordBearer(tokenUrl="owners/login", auto_error=False)
 
 auth_service = AuthService()
 
-def get_current_user(token: str = Depends(oauth2_user_scheme), db: Session = Depends(get_db)):
-    try:
-        payload = auth_service.verify_token(token)
-        username: str = payload.get("sub")
+
+def get_current_user(token: Optional[str] = Depends(oauth2_user_scheme), db: Session = Depends(get_db)):
+    if not token:
+        return None
+
+    payload = auth_service.verify_token(token)
+    if payload.get("role") != "user":
+        return None
+
+    user_repo = UserRepository(db)
+    return user_repo.get_by_username(payload.get("sub"))
 
 
-        if username is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-            )
+def get_current_admin(token: Optional[str] = Depends(oauth2_admin_scheme), db: Session = Depends(get_db)):
+    if not token:
+        return None
 
-        user_repo = UserRepository(db)
-        user = user_repo.get_by_username(username)
+    payload = auth_service.verify_token(token)
+    if payload.get("role") != "admin":
+        return None
 
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-            )
-        return user
+    admin_repo = AdminRepository(db)
+    return admin_repo.get_by_username(payload.get("sub"))
 
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-        )
 
-def get_current_admin(token: str = Depends(oauth2_admin_scheme), db: Session = Depends(get_db)):
-    try:
-        payload = auth_service.verify_token(token)
-        username: str = payload.get("sub")
+def get_current_owner(token: Optional[str] = Depends(oauth2_owner_scheme), db: Session = Depends(get_db)):
+    if not token:
+        return None
 
-        if username is None or payload.get("role") != "admin":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-            )
+    payload = auth_service.verify_token(token)
+    if payload.get("role") != "owner":
+        return None
 
-        admin_repo = AdminRepository(db)
-        admin = admin_repo.get_by_username(username)
-
-        if admin is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-            )
-        return admin
-
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
+    owner_repo = OwnerRepository(db)
+    return owner_repo.get_by_username(payload.get("sub"))
