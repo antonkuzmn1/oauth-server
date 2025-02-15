@@ -22,7 +22,7 @@ class AuthService:
         to_encode = data.copy()
         expire = datetime.now(timezone.utc) + timedelta(minutes=self.expire_minutes)
         to_encode.update({"exp": expire})
-        token = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+        token = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm or 'HS256')
         return token
 
     def verify_token(self, token: str):
