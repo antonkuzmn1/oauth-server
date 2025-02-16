@@ -28,7 +28,7 @@ def get_all_configs(
     )
 
 
-@router.get("/{owner_id}", response_model=OwnerOut)
+@router.get("/{owner_id}", response_model=ConfigOut)
 def get_config_by_key(
         config_key: str,
         db: Session = Depends(get_db),
@@ -44,8 +44,8 @@ def get_config_by_key(
     )
 
 
-@router.post("/", response_model=OwnerOut)
-def create_owner(
+@router.post("/", response_model=ConfigOut)
+def create_config(
         owner: ConfigCreate,
         db: Session = Depends(get_db),
         current_owner: Annotated[OwnerOut, Depends(get_current_owner)] = None,
@@ -61,7 +61,7 @@ def create_owner(
 
 
 @router.put("/{config_key}", response_model=ConfigOut)
-def update_owner(
+def update_config(
         config_key: str,
         config: ConfigUpdate,
         db: Session = Depends(get_db),
@@ -77,8 +77,8 @@ def update_owner(
     )
 
 
-@router.delete("/{config_key}", response_model=OwnerOut)
-def delete_owner(
+@router.delete("/{config_key}", response_model=ConfigOut)
+def delete_config(
         config_key: str,
         db: Session = Depends(get_db),
         current_owner: Annotated[OwnerOut, Depends(get_current_owner)] = None,
