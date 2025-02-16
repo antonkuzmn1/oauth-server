@@ -53,6 +53,6 @@ def main():
     }
 
 
-@app.post("/token")
-def check_token_endpoint(token: str):
+@app.post("/check")
+def check_token(token: str):
     return auth_service.verify_token(token)
