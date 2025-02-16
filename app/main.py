@@ -20,6 +20,7 @@ from app.api.admins import router as admins_router
 from app.api.companies import router as companies_router
 from app.api.users import router as users_router
 from app.api.owner import router as owner_router
+from app.api.config import router as config_router
 
 from app.services.auth_service import AuthService
 
@@ -42,6 +43,7 @@ app.include_router(admins_router)
 app.include_router(companies_router)
 app.include_router(users_router)
 app.include_router(owner_router)
+app.include_router(config_router)
 
 
 @app.get("/")
