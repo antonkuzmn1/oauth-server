@@ -44,7 +44,13 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://oauth.antonkuzm.in",
+        "http://oauth.antonkuzm.in",
+        "https://oauth-owner-client.antonkuzm.in",
+        "http://oauth-owner-client.antonkuzm.in",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
