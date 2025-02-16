@@ -27,8 +27,8 @@ class ConfigService:
         record = self.repository.create(key=config.key, value=config.value)
         return self.schema_out.model_validate(record)
 
-    def update(self, config: ConfigUpdate) -> Optional[ConfigOut]:
-        record = self.repository.update(key=config.key, value=config.value)
+    def update(self, key: str, config: ConfigUpdate) -> Optional[ConfigOut]:
+        record = self.repository.update(key=key, value=config.value)
         if record:
             return self.schema_out.model_validate(record)
         return None
