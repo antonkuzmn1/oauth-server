@@ -22,7 +22,7 @@ class BaseRepository(Generic[T]):
         )
 
     def get_all(self) -> List[T]:
-        return list(self.db.scalars(select(self.model)).all())
+        return list(self.db.scalars(select(self.model).where(self.model.deleted.is_(False))).all())
 
     def get_by_id(self, item_id: int) -> Optional[T]:
         return self.db.scalar(select(self.model).where(
