@@ -1,11 +1,12 @@
+from typing import Optional, List
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from typing import Optional, List
 
 from app.models import Company
 from app.repositories.company_repo import CompanyRepository
 from app.schemas.admin import AdminOut
-from app.schemas.company import CompanyOut, CompanyCreate, CompanyUpdate
+from app.schemas.company import CompanyOut
 from app.schemas.user import UserOut
 from app.services.base_service import BaseService
 
@@ -58,8 +59,8 @@ class CompanyService(BaseService[CompanyRepository]):
         return CompanyOut.model_validate(company) if company else None
 
     def get_by_id_by_user(self, company_id: int, current_user: UserOut) -> Optional[CompanyOut]:
-        company_id = current_user.company_id
-        if not company_id:
+        users_company_id = current_user.company_id
+        if not users_company_id:
             return None
 
         stmt = (
