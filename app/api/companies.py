@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.dependecies.auth import get_current_owner, get_current_admin, get_current_user
 from app.schemas.admin import AdminOut
-from app.schemas.company import CompanyOut, CompanyBase, CompanyCreate, CompanyUpdate
+from app.schemas.company import CompanyOut, CompanyCreate, CompanyUpdate
 from app.schemas.owner import OwnerOut
 from app.schemas.user import UserOut
 from app.services.company_service import CompanyService
