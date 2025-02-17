@@ -9,7 +9,6 @@ from app.schemas.config import ConfigOut, ConfigCreate, ConfigUpdate
 class ConfigService:
     def __init__(self, db: Session):
         repo = ConfigRepository(db)
-        self.db = db
         self.repository = repo
         self.schema_out = ConfigOut
 

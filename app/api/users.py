@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.dependecies.auth import get_current_user, get_current_owner, get_current_admin
+from app.dependencies.auth import get_current_user, get_current_owner, get_current_admin
 from app.schemas.admin import AdminOut
 from app.schemas.owner import OwnerOut
 from app.schemas.token import Token

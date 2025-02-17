@@ -5,7 +5,7 @@ from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.dependecies.auth import get_current_owner
+from app.dependencies.auth import get_current_owner
 from app.schemas.config import ConfigOut, ConfigCreate, ConfigUpdate
 from app.schemas.owner import OwnerOut
 from app.services.config_service import ConfigService
