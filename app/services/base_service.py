@@ -38,12 +38,10 @@ class BaseService(Generic[T]):
             return self.schema_out.model_validate(record)
         return None
 
-    def get_all(self) -> List[SchemaOut]:
-        records = self.repository.get_all()
+    def get_all(self, *filters) -> List[SchemaOut]:
+        records = self.repository.get_all(*filters)
         return [self.schema_out.model_validate(record) for record in records]
 
-    def get_by_id(self, record_id: int) -> Optional[SchemaOut]:
-        record = self.repository.get_by_id(record_id)
-        if record:
-            return self.schema_out.model_validate(record)
-        return None
+    def get_by_id(self, record_id: int, *filters) -> Optional[SchemaOut]:
+        record = self.repository.get_by_id(record_id, *filters)
+        return self.schema_out.model_validate(record) if record else None

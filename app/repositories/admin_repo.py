@@ -23,6 +23,7 @@ class AdminRepository(BaseRepository[Admin]):
                 .where(admin_company_association.c.company_id == company_id)
             ).all()
             return list(admins)
+
         except SQLAlchemyError as e:
             logger.error(f"Error fetching admins by company: {e}")
             self.db.rollback()
@@ -37,6 +38,7 @@ class AdminRepository(BaseRepository[Admin]):
                 )
             )
             return admin.companies if admin else []
+
         except SQLAlchemyError as e:
             logger.error(f"Error fetching companies by admin: {e}")
             self.db.rollback()
@@ -54,6 +56,7 @@ class AdminRepository(BaseRepository[Admin]):
             self.db.commit()
             self.db.refresh(admin)
             return admin
+
         except SQLAlchemyError as e:
             logger.error(f"Error adding company to admin: {e}")
             self.db.rollback()
@@ -71,6 +74,7 @@ class AdminRepository(BaseRepository[Admin]):
             self.db.commit()
             self.db.refresh(admin)
             return admin
+
         except SQLAlchemyError as e:
             logger.error(f"Error removing company from admin: {e}")
             self.db.rollback()

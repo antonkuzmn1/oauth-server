@@ -1,7 +1,6 @@
 from typing import Optional, List
 from sqlalchemy.orm import Session
 
-from app.models import User
 from app.repositories.admin_repo import AdminRepository
 from app.schemas.user import UserOut
 from app.utils.logger import logger
@@ -11,6 +10,7 @@ from app.services.auth_service import AuthService
 from app.services.base_service import BaseService
 from sqlalchemy import select
 
+
 auth_service = AuthService()
 
 
@@ -19,66 +19,36 @@ class AdminService(BaseService[AdminRepository]):
         super().__init__(AdminRepository(db), AdminOut)
         self.db = db
 
-    def get_all_by_admin(self, current_admin: AdminOut) -> List[AdminOut]:
+    def get_all_admins_for_admin(self, current_admin: AdminOut) -> List[AdminOut]:
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return []
+        filters = [
+            admin_company_association.c.company_id.in_(company_ids),
+            Admin.id != current_admin.id
+        ]
+        return super().get_all(*filters)
 
-        stmt = (
-            select(Admin)
-            .join(admin_company_association)
-            .filter(admin_company_association.c.company_id.in_(company_ids))
-            .filter(Admin.id != current_admin.id)
-            .distinct()
-        )
-        admins = self.db.scalars(stmt).all()
-        return [AdminOut.model_validate(admin) for admin in admins]
-
-    def get_all_by_user(self, current_user: UserOut) -> List[AdminOut]:
-        company_id = current_user.company_id
-        if not company_id:
-            return []
-
-        stmt = (
-            select(Admin)
-            .join(admin_company_association)
-            .filter(admin_company_association.c.company_id == company_id)
-            .distinct()
-        )
-        admins = self.db.scalars(stmt).all()
-        return [AdminOut.model_validate(admin) for admin in admins]
-
-    def get_by_id_by_admin(self, admin_id: int, current_admin: AdminOut) -> Optional[AdminOut]:
+    def get_admin_by_id_for_admin(self, admin_id: int, current_admin: AdminOut) -> Optional[AdminOut]:
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return None
+        filters = [admin_company_association.c.company_id.in_(company_ids)]
+        return super().get_by_id(admin_id, *filters)
 
-        stmt = (
-            select(Admin)
-            .join(admin_company_association)
-            .filter(admin_company_association.c.company_id.in_(company_ids))
-            .filter(Admin.id == admin_id)
-            .distinct()
-        )
+    def get_all_admins_for_user(self, current_user: UserOut) -> List[AdminOut]:
+        company_id = current_user.company_id
+        if not company_id:
+            return []
+        filters = [admin_company_association.c.company_id == company_id]
+        return super().get_all(*filters)
 
-        admin = self.db.scalars(stmt).first()
-        return AdminOut.model_validate(admin) if admin else None
-
-    def get_by_id_by_user(self, admin_id: int, current_user: UserOut) -> Optional[AdminOut]:
+    def get_admin_by_id_for_user(self, admin_id: int, current_user: UserOut) -> Optional[AdminOut]:
         company_id = current_user.company_id
         if not company_id:
             return None
-
-        stmt = (
-            select(Admin)
-            .join(admin_company_association)
-            .filter(admin_company_association.c.company_id == company_id)
-            .filter(Admin.id == admin_id)
-            .distinct()
-        )
-
-        admin = self.db.scalars(stmt).first()
-        return AdminOut.model_validate(admin) if admin else None
+        filters = [admin_company_association.c.company_id == company_id]
+        return super().get_by_id(admin_id, *filters)
 
     def create(self, admin_data: AdminCreate) -> Optional[AdminOut]:
         logger.warning("ADMIN_SERVICE: Attempt to create admin")
@@ -86,7 +56,7 @@ class AdminService(BaseService[AdminRepository]):
         admin_data_dict = admin_data.model_dump(exclude={"password"})
         admin_data_dict["hashed_password"] = auth_service.hash_password(admin_data.password)
 
-        return self.repository.create(admin_data_dict)
+        return super().create(admin_data_dict)
 
     def update(self, admin_id: int, admin_data: AdminUpdate) -> Optional[AdminOut]:
         logger.warning("ADMIN_SERVICE: Attempt to update admin")

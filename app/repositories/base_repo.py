@@ -21,13 +21,19 @@ class BaseRepository(Generic[T]):
             self.model.deleted.is_(False))
         )
 
-    def get_all(self) -> List[T]:
-        return list(self.db.scalars(select(self.model).where(self.model.deleted.is_(False))).all())
+    def get_all(self, *filters) -> List[T]:
+        base_filters = [self.model.deleted.is_(False)]
+        if filters:
+            base_filters.extend(filters)
+        stmt = select(self.model).where(*base_filters)
+        return list(self.db.scalars(stmt).all())
 
-    def get_by_id(self, item_id: int) -> Optional[T]:
-        return self.db.scalar(select(self.model).where(
-            self.model.id == item_id,
-            self.model.deleted.is_(False)))
+    def get_by_id(self, item_id: int, *filters) -> Optional[T]:
+        base_filters = [self.model.id == item_id, self.model.deleted.is_(False)]
+        if filters:
+            base_filters.extend(filters)
+        stmt = select(self.model).where(*base_filters)
+        return self.db.scalar(stmt)
 
     def create(self, item_data: dict) -> Optional[T]:
         logger.warning("BASE_REPO: Attempt to create something")
