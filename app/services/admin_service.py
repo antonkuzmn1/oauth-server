@@ -8,7 +8,6 @@ from app.models.admin import Admin, admin_company_association
 from app.schemas.admin import AdminCreate, AdminUpdate, AdminOut
 from app.services.auth_service import AuthService
 from app.services.base_service import BaseService
-from sqlalchemy import select
 
 
 auth_service = AuthService()
@@ -17,7 +16,6 @@ auth_service = AuthService()
 class AdminService(BaseService[AdminRepository]):
     def __init__(self, db: Session):
         super().__init__(AdminRepository(db), AdminOut)
-        self.db = db
 
     def get_all_admins_for_admin(self, current_admin: AdminOut) -> List[AdminOut]:
         company_ids = [company.id for company in current_admin.companies]

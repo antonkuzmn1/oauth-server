@@ -18,9 +18,7 @@ class CompanyService(BaseService[CompanyRepository]):
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return []
-        filters = [
-            Company.id.in_(company_ids),
-        ]
+        filters = [Company.id.in_(company_ids)]
         return super().get_all(*filters)
 
     def get_company_for_user(self, current_user: UserOut) -> Optional[CompanyOut]:
@@ -34,4 +32,4 @@ class CompanyService(BaseService[CompanyRepository]):
         if not company_ids:
             return None
         filters = [admin_company_association.c.company_id.in_(company_ids)]
-        return super().get_by_id(company_id, filters)
+        return super().get_by_id(company_id, *filters)

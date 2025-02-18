@@ -41,10 +41,10 @@ def get_all_users(
         return service.get_all()
 
     if current_admin:
-        return service.get_all_by_admin(current_admin)
+        return service.get_all_users_for_admin(current_admin)
 
     if current_user:
-        return service.get_all_by_user(current_user)
+        return service.get_all_users_for_user(current_user)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -66,10 +66,10 @@ def get_user_by_id(
         return service.get_by_id(user_id)
 
     if current_admin:
-        return service.get_by_id_by_admin(user_id, current_admin)
+        return service.get_user_by_id_for_admin(user_id, current_admin)
 
     if current_user:
-        return service.get_by_id_by_user(user_id, current_user)
+        return service.get_user_by_id_for_user(user_id, current_user)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

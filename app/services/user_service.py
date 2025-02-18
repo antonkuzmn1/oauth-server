@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import User
@@ -14,87 +13,56 @@ from app.services.base_service import BaseService
 class UserService(BaseService[UserRepository]):
     def __init__(self, db: Session):
         super().__init__(UserRepository(db), UserOut)
-        self.db = db
 
-    def get_all_by_admin(self, current_admin: AdminOut) -> List[UserOut]:
+    def get_all_users_for_admin(self, current_admin: AdminOut) -> List[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return []
+        filters = [User.company_id.in_(company_ids)]
+        return super().get_all(*filters)
 
-        stmt = (
-            select(User)
-            .filter(User.company_id.in_(company_ids))
-            .filter(User.deleted.is_(False))
-            .distinct()
-        )
-        users = self.db.scalars(stmt).all()
-        return [UserOut.model_validate(user) for user in users]
-
-    def get_all_by_user(self, current_user: UserOut) -> List[UserOut]:
+    def get_all_users_for_user(self, current_user: UserOut) -> List[UserOut]:
         company_id = current_user.company_id
         if not company_id:
             return []
+        filters = [User.company_id == company_id]
+        return super().get_all(*filters)
 
-        stmt = (
-            select(User)
-            .filter(User.company_id == company_id)
-            .filter(User.deleted.is_(False))
-            .distinct()
-        )
-        users = self.db.scalars(stmt).all()
-        return [UserOut.model_validate(user) for user in users]
-
-    def get_by_id_by_admin(self, user_id: int, current_admin: AdminOut) -> Optional[UserOut]:
+    def get_user_by_id_for_admin(self, user_id: int, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return None
+        filters = [User.company_id.in_(company_ids)]
+        return super().get_by_id(user_id, *filters)
 
-        stmt = (
-            select(User)
-            .filter(User.company_id.in_(company_ids))
-            .filter(User.id == user_id)
-            .filter(User.deleted.is_(False))
-            .distinct()
-        )
-
-        user = self.db.scalars(stmt).first()
-        return UserOut.model_validate(user) if user else None
-
-    def get_by_id_by_user(self, user_id: int, current_user: UserOut) -> Optional[AdminOut]:
+    def get_user_by_id_for_user(self, user_id: int, current_user: UserOut) -> Optional[AdminOut]:
         company_id = current_user.company_id
         if not company_id:
             return None
-
-        stmt = (
-            select(User)
-            .filter(User.company_id == company_id)
-            .filter(User.id == user_id)
-            .filter(User.deleted.is_(False))
-            .distinct()
-        )
-
-        user = self.db.scalars(stmt).first()
-        return UserOut.model_validate(user) if user else None
+        filters = [User.company_id == company_id]
+        return super().get_by_id(user_id, *filters)
 
     def create_by_admin(self, user: UserCreate, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
-
         if not user.company_id or user.company_id not in company_ids:
             return None
+        return super().create(user)
 
-        return self.create(user)
-
-    def update_by_admin(self, user_id: int, user: UserUpdate, current_admin: AdminOut) -> Optional[UserOut]:
+    def update_by_admin(self, user_id: int, user_data: UserUpdate, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
-        old_company_id = self.get_by_id(user_id).company_id
+        user = self.get_by_id(user_id)
+        if not user:
+            return None
+
+        old_company_id = user.company_id
 
         if not old_company_id or old_company_id not in company_ids:
             return None
 
-        if not user.company_id or user.company_id not in company_ids:
+        if not user_data.company_id or user_data.company_id not in company_ids:
             return None
 
-        return self.update(user_id, user)
+        return super().update(user_id, user)
 
     def delete_by_admin(self, user_id: int, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
@@ -103,7 +71,7 @@ class UserService(BaseService[UserRepository]):
         if not old_company_id or old_company_id not in company_ids:
             return None
 
-        return self.delete(user_id)
+        return super().delete(user_id)
 
     def authenticate_user(self, username: str, password: str):
         user = self.repository.get_by_username(username)

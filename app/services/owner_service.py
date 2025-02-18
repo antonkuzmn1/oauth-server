@@ -22,7 +22,7 @@ class OwnerService(BaseService[OwnerRepository]):
         owner_data_dict = owner_data.model_dump(exclude={"password"})
         owner_data_dict["hashed_password"] = auth_service.hash_password(owner_data.password)
 
-        return self.repository.create(owner_data_dict)
+        return super().create(owner_data_dict)
 
     def update(self, owner_id: int, owner_data: OwnerUpdate) -> Optional[OwnerOut]:
         logger.warning("OWNER_SERVICE: Attempt to update owner")
@@ -37,7 +37,7 @@ class OwnerService(BaseService[OwnerRepository]):
             updated_owner["hashed_password"] = auth_service.hash_password(updated_owner["password"])
             del updated_owner["password"]
 
-        return self.update(owner_id, updated_owner)
+        return super().update(owner_id, updated_owner)
 
     def authenticate_owner(self, username: str, password: str) -> Optional[Owner]:
         owner = self.repository.get_by_username(username)
