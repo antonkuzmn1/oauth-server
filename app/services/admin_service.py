@@ -17,6 +17,7 @@ auth_service = AuthService()
 class AdminService(BaseService[AdminRepository]):
     def __init__(self, db: Session):
         super().__init__(AdminRepository(db), AdminOut)
+        self.db = db
 
     def get_all_admins_for_admin(self, current_admin: AdminOut) -> List[AdminOut]:
         company_ids = [company.id for company in current_admin.companies]
@@ -24,7 +25,7 @@ class AdminService(BaseService[AdminRepository]):
             return []
         filters = [
             admin_company_association.c.company_id.in_(company_ids),
-            Admin.id != current_admin.id
+            admin_company_association.c.admin_id == Admin.id,
         ]
         return super().get_all(*filters)
 
@@ -32,14 +33,19 @@ class AdminService(BaseService[AdminRepository]):
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return None
-        filters = [admin_company_association.c.company_id.in_(company_ids)]
+        filters = [
+            admin_company_association.c.company_id.in_(company_ids),
+            admin_company_association.c.admin_id == Admin.id,
+        ]
         return super().get_by_id(admin_id, *filters)
 
     def get_all_admins_for_user(self, current_user: UserOut) -> List[AdminOut]:
         company_id = current_user.company_id
         if not company_id:
             return []
-        filters = [admin_company_association.c.company_id == company_id]
+        filters = [
+            admin_company_association.c.company_id == company_id,
+        ]
         return super().get_all(*filters)
 
     def get_admin_by_id_for_user(self, admin_id: int, current_user: UserOut) -> Optional[AdminOut]:

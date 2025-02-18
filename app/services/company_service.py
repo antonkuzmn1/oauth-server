@@ -1,7 +1,8 @@
 from typing import Optional, List
 from sqlalchemy.orm import Session
 
-from app.models.admin import admin_company_association
+from app.models import Company
+from app.models.admin import admin_company_association, Admin
 from app.repositories.company_repo import CompanyRepository
 from app.schemas.admin import AdminOut
 from app.schemas.company import CompanyOut
@@ -17,7 +18,9 @@ class CompanyService(BaseService[CompanyRepository]):
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return []
-        filters = [admin_company_association.c.company_id.in_(company_ids)]
+        filters = [
+            Company.id.in_(company_ids),
+        ]
         return super().get_all(*filters)
 
     def get_company_for_user(self, current_user: UserOut) -> Optional[CompanyOut]:

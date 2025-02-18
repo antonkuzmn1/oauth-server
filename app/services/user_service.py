@@ -24,6 +24,7 @@ class UserService(BaseService[UserRepository]):
         stmt = (
             select(User)
             .filter(User.company_id.in_(company_ids))
+            .filter(User.deleted.is_(False))
             .distinct()
         )
         users = self.db.scalars(stmt).all()
@@ -37,6 +38,7 @@ class UserService(BaseService[UserRepository]):
         stmt = (
             select(User)
             .filter(User.company_id == company_id)
+            .filter(User.deleted.is_(False))
             .distinct()
         )
         users = self.db.scalars(stmt).all()
@@ -51,6 +53,7 @@ class UserService(BaseService[UserRepository]):
             select(User)
             .filter(User.company_id.in_(company_ids))
             .filter(User.id == user_id)
+            .filter(User.deleted.is_(False))
             .distinct()
         )
 
@@ -66,6 +69,7 @@ class UserService(BaseService[UserRepository]):
             select(User)
             .filter(User.company_id == company_id)
             .filter(User.id == user_id)
+            .filter(User.deleted.is_(False))
             .distinct()
         )
 

@@ -25,7 +25,7 @@ class BaseRepository(Generic[T]):
         base_filters = [self.model.deleted.is_(False)]
         if filters:
             base_filters.extend(filters)
-        stmt = select(self.model).where(*base_filters)
+        stmt = select(self.model).where(*base_filters).distinct()
         return list(self.db.scalars(stmt).all())
 
     def get_by_id(self, item_id: int, *filters) -> Optional[T]:
