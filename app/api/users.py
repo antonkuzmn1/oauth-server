@@ -146,5 +146,19 @@ def login_for_user_access_token(form_data: Annotated[OAuth2PasswordRequestForm, 
                                 db: Session = Depends(get_db)):
     service = UserService(db)
     user = service.authenticate_user(form_data.username, form_data.password)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password"
+        )
+
     access_token = UserService.create_user_token(user)
+
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
     return {"access_token": access_token, "token_type": "bearer"}

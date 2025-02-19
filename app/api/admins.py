@@ -167,5 +167,19 @@ def login_for_admin_access_token(
 ):
     service = AdminService(db)
     admin = service.authenticate_admin(form_data.username, form_data.password)
+
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password"
+        )
+
     access_token = service.create_admin_token(admin)
+
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
     return {"access_token": access_token, "token_type": "bearer"}
