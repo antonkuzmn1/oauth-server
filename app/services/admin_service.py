@@ -93,5 +93,5 @@ class AdminService(BaseService[AdminRepository]):
 
     @classmethod
     def create_admin_token(cls, admin: Admin) -> str:
-        token_data = {"sub": admin.username, "role": "admin"}
+        token_data = {"sub": admin.username, "role": "admin", "id": admin.id}
         return auth_service.create_access_token(token_data)

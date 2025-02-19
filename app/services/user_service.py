@@ -82,5 +82,5 @@ class UserService(BaseService[UserRepository]):
     @staticmethod
     def create_user_token(user) -> str:
         auth_service = AuthService()
-        token_data = {"sub": user.username, "role": "user"}
+        token_data = {"sub": user.username, "role": "user", "id": user.id}
         return auth_service.create_access_token(token_data)

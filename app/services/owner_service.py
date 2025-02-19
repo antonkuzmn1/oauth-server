@@ -49,5 +49,5 @@ class OwnerService(BaseService[OwnerRepository]):
     def create_owner_token(cls, owner: Owner) -> Optional[str]:
         if not owner:
             return None
-        token_data = {"sub": owner.username, "role": "owner"}
+        token_data = {"sub": owner.username, "role": "owner", "id": owner.id}
         return auth_service.create_access_token(token_data)
