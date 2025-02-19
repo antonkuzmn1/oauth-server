@@ -15,7 +15,7 @@ limitations under the License.
 """
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.admins import router as admins_router
@@ -67,5 +67,10 @@ def main():
 
 
 @app.post("/check")
-def check_token(token: str):
+def check_token(authorization: str = Header(default=None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+
+    token = authorization.split(" ")[1]
     return auth_service.verify_token(token)
+
