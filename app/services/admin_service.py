@@ -41,12 +41,18 @@ class AdminService(BaseService[AdminRepository]):
         company_id = current_user.company_id
         if not company_id:
             return []
-        return (
+
+        admins = (
             self.db.query(Admin)
             .join(admin_company_association, Admin.id == admin_company_association.c.admin_id)
-            .filter(admin_company_association.c.company_id == company_id)
+            .filter(
+                admin_company_association.c.company_id == company_id,
+                Admin.deleted == False
+            )
             .all()
         )
+
+        return [AdminOut.from_orm(admin) for admin in admins]
 
     def get_admin_by_id_for_user(self, admin_id: int, current_user: UserOut) -> Optional[AdminOut]:
         company_id = current_user.company_id
