@@ -9,13 +9,13 @@ from app.schemas.admin import AdminCreate, AdminUpdate, AdminOut
 from app.services.auth_service import AuthService
 from app.services.base_service import BaseService
 
-
 auth_service = AuthService()
 
 
 class AdminService(BaseService[AdminRepository]):
     def __init__(self, db: Session):
         super().__init__(AdminRepository(db), AdminOut)
+        self.db = db
 
     def get_all_admins_for_admin(self, current_admin: AdminOut) -> List[AdminOut]:
         company_ids = [company.id for company in current_admin.companies]
@@ -41,10 +41,12 @@ class AdminService(BaseService[AdminRepository]):
         company_id = current_user.company_id
         if not company_id:
             return []
-        filters = [
-            admin_company_association.c.company_id == company_id,
-        ]
-        return super().get_all(*filters)
+        return (
+            self.db.query(Admin)
+            .join(admin_company_association, Admin.id == admin_company_association.c.admin_id)
+            .filter(admin_company_association.c.company_id == company_id)
+            .all()
+        )
 
     def get_admin_by_id_for_user(self, admin_id: int, current_user: UserOut) -> Optional[AdminOut]:
         company_id = current_user.company_id
