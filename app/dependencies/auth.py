@@ -10,6 +10,7 @@ from app.repositories.owner_repo import OwnerRepository
 from app.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
 
+
 oauth2_user_scheme = OAuth2PasswordBearer(tokenUrl="users/login", auto_error=False)
 oauth2_admin_scheme = OAuth2PasswordBearer(tokenUrl="admins/login", auto_error=False)
 oauth2_owner_scheme = OAuth2PasswordBearer(tokenUrl="owner/login", auto_error=False)

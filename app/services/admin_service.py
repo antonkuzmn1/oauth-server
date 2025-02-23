@@ -5,6 +5,7 @@ from app.repositories.admin_repo import AdminRepository
 from app.schemas.user import UserOut
 from app.utils.logger import logger
 from app.models.admin import Admin, admin_company_association
+from app.models.company import Company
 from app.schemas.admin import AdminCreate, AdminUpdate, AdminOut
 from app.services.auth_service import AuthService
 from app.services.base_service import BaseService
@@ -41,24 +42,21 @@ class AdminService(BaseService[AdminRepository]):
         company_id = current_user.company_id
         if not company_id:
             return []
+        filters = [
+            admin_company_association.c.company_id == company_id,
+            admin_company_association.c.admin_id == Admin.id,
+        ]
 
-        admins = (
-            self.db.query(Admin)
-            .join(admin_company_association, Admin.id == admin_company_association.c.admin_id)
-            .filter(
-                admin_company_association.c.company_id == company_id,
-                Admin.deleted == False
-            )
-            .all()
-        )
-
-        return [AdminOut.from_orm(admin) for admin in admins]
+        return super().get_all(*filters)
 
     def get_admin_by_id_for_user(self, admin_id: int, current_user: UserOut) -> Optional[AdminOut]:
         company_id = current_user.company_id
         if not company_id:
             return None
-        filters = [admin_company_association.c.company_id == company_id]
+        filters = [
+            admin_company_association.c.company_id == company_id,
+            admin_company_association.c.admin_id == Admin.id,
+        ]
         return super().get_by_id(admin_id, *filters)
 
     def create(self, admin_data: AdminCreate) -> Optional[AdminOut]:
