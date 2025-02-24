@@ -3,6 +3,8 @@ from typing import Type, TypeVar, Generic, Optional, List
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+
+from app.repositories.abstract_repo import AbstractRepository
 from app.models import Base
 from app.utils.logger import logger
 
@@ -10,7 +12,7 @@ from app.utils.logger import logger
 T = TypeVar("T", bound=Base)
 
 
-class BaseRepository(Generic[T]):
+class BaseRepository(AbstractRepository[T], Generic[T]):
     def __init__(self, db: Session, model: Type[T]):
         self.db = db
         self.model = model
