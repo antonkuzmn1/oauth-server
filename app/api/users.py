@@ -2,10 +2,9 @@ from typing import List, Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 
-from app.core.db import get_db
 from app.dependencies.auth import get_current_user, get_current_owner, get_current_admin
+from app.dependencies.services import get_user_service
 from app.schemas.admin import AdminOut
 from app.schemas.owner import OwnerOut
 from app.schemas.token import Token
@@ -29,22 +28,20 @@ async def get_user_profile(
 
 
 @router.get("/", response_model=List[UserOut])
-def get_all_users(
-        db: Session = Depends(get_db),
+async def get_all_users(
+        user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
         current_user: Optional[UserOut] = Depends(get_current_user),
 ):
-    service = UserService(db)
-
     if current_owner:
-        return service.get_all()
+        return await user_service.get_all()
 
     if current_admin:
-        return service.get_all_users_for_admin(current_admin)
+        return await user_service.get_all_users_for_admin(current_admin)
 
     if current_user:
-        return service.get_all_users_for_user(current_user)
+        return await user_service.get_all_users_for_user(current_user)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -53,23 +50,22 @@ def get_all_users(
 
 
 @router.get("/{user_id}", response_model=UserOut)
-def get_user_by_id(
+async def get_user_by_id(
         user_id: int,
-        db: Session = Depends(get_db),
+        user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
         current_user: Optional[UserOut] = Depends(get_current_user),
 ):
-    service = UserService(db)
 
     if current_owner:
-        return service.get_by_id(user_id)
+        return await user_service.get_by_id(user_id)
 
     if current_admin:
-        return service.get_user_by_id_for_admin(user_id, current_admin)
+        return await user_service.get_user_by_id_for_admin(user_id, current_admin)
 
     if current_user:
-        return service.get_user_by_id_for_user(user_id, current_user)
+        return await user_service.get_user_by_id_for_user(user_id, current_user)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -78,19 +74,18 @@ def get_user_by_id(
 
 
 @router.post("/", response_model=UserOut)
-def create_user(
+async def create_user(
         user: UserCreate,
-        db: Session = Depends(get_db),
+        user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
 ):
-    service = UserService(db)
 
     if current_owner:
-        return service.create(user)
+        return await user_service.create(user)
 
     if current_admin:
-        return service.create_by_admin(user, current_admin)
+        return await user_service.create_by_admin(user, current_admin)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -99,20 +94,20 @@ def create_user(
 
 
 @router.put("/{user_id}", response_model=UserOut)
-def update_user(
+async def update_user(
         user_id: int,
         user: UserUpdate,
-        db: Session = Depends(get_db),
+        user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
 ):
-    service = UserService(db)
+
 
     if current_owner:
-        return service.update(user_id, user)
+        return await user_service.update(user_id, user)
 
     if current_admin:
-        return service.update_by_admin(user_id, user, current_admin)
+        return await user_service.update_by_admin(user_id, user, current_admin)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -121,19 +116,17 @@ def update_user(
 
 
 @router.delete("/{user_id}", response_model=UserOut)
-def delete_user(
+async def delete_user(
         user_id: int,
-        db: Session = Depends(get_db),
+        user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
 ):
-    service = UserService(db)
-
     if current_owner:
-        return service.delete(user_id)
+        return await user_service.delete(user_id)
 
     if current_admin:
-        return service.delete_by_admin(user_id, current_admin)
+        return await user_service.delete_by_admin(user_id, current_admin)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -142,10 +135,12 @@ def delete_user(
 
 
 @router.post("/login", response_model=Token)
-def login_for_user_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-                                db: Session = Depends(get_db)):
-    service = UserService(db)
-    user = service.authenticate_user(form_data.username, form_data.password)
+async def login_for_user_access_token(
+        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        user_service: UserService = Depends(get_user_service),
+):
+
+    user = await user_service.authenticate_user(form_data.username, form_data.password)
 
     if not user:
         raise HTTPException(
@@ -153,7 +148,7 @@ def login_for_user_access_token(form_data: Annotated[OAuth2PasswordRequestForm, 
             detail="Invalid username or password"
         )
 
-    access_token = UserService.create_user_token(user)
+    access_token = await user_service.create_user_token(user)
 
     if not access_token:
         raise HTTPException(

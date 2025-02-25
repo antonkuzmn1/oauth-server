@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from contextlib import asynccontextmanager
+from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.admins import router as admins_router
@@ -23,23 +24,19 @@ from app.api.companies import router as companies_router
 from app.api.users import router as users_router
 from app.api.owner import router as owner_router
 from app.api.config import router as config_router
+from app.dependencies.services import get_auth_service
 
 from app.services.auth_service import AuthService
 
 from app.core.settings import settings
 
-from app.utils.startup import startup
-
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     print("Server started!")
-    startup()
     yield
     print("Server stopped!")
 
-
-auth_service = AuthService()
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -58,7 +55,7 @@ app.include_router(config_router)
 
 
 @app.get("/")
-def main():
+async def main():
     return {
         "message": "test!",
         "debug": settings.DEBUG,
@@ -67,10 +64,11 @@ def main():
 
 
 @app.post("/check")
-def check_token(authorization: str = Header(default=None)):
+async def check_token(auth_service: Annotated[AuthService, Depends(get_auth_service)],
+                authorization: str = Header(default=None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
     token = authorization.split(" ")[1]
-    return auth_service.verify_token(token)
+    return await auth_service.verify_token(token)
 
