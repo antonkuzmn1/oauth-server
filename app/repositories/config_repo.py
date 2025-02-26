@@ -66,6 +66,7 @@ class ConfigRepository:
 
             await self.db.delete(item)
             await self.db.commit()
+            await self.db.refresh(item)
             return item
         except SQLAlchemyError as e:
             logger.error(f"Failed to delete config key={key}: {e}")

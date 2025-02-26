@@ -80,9 +80,9 @@ class BaseRepository(AbstractRepository[T], Generic[T]):
 
         try:
             await self.db.commit()
+            await self.db.refresh(item)
+            return item
         except SQLAlchemyError as e:
             logger.error(f"Error deleting item: {e}")
             await self.db.rollback()
             return None
-
-        return item
