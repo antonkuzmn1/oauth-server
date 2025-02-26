@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.company import CompanyOut
 
@@ -18,15 +18,17 @@ class UserBase(BaseModel):
     cellular: Optional[str] = None
     post: Optional[str] = None
     company_id: int
-    password: str
 
 
 class UserCreate(UserBase):
-    pass
+    password: str
 
 
 class UserUpdate(UserBase):
-    pass
+    surname: Optional[str] = None
+    name: Optional[str] = None
+    password: Optional[str] = None
+    company_id: Optional[int] = None
 
 
 class UserOut(UserBase):
@@ -35,5 +37,4 @@ class UserOut(UserBase):
     updated_at: Optional[datetime] = None
     company: CompanyOut
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

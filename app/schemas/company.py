@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
-from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
 
 
 class CompanyBase(BaseModel):
@@ -20,5 +20,4 @@ class CompanyOut(CompanyBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
