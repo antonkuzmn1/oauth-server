@@ -18,17 +18,15 @@ class UserBase(BaseModel):
     cellular: Optional[str] = None
     post: Optional[str] = None
     company_id: int
-
-
-class UserCreate(UserBase):
     password: str
 
 
+class UserCreate(UserBase):
+    pass
+
+
 class UserUpdate(UserBase):
-    surname: Optional[str] = None
-    name: Optional[str] = None
-    password: Optional[str] = None
-    company_id: Optional[int] = None
+    pass
 
 
 class UserOut(UserBase):

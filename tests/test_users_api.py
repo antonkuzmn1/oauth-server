@@ -33,7 +33,13 @@ async def test_create_user(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_update_user(client: AsyncClient):
     user_id = 1
-    update_data = {"username": "updateduser"}
+    update_data = {
+        "username": "updateuser",
+        "password": "updatesecurepassword",
+        "name": "updatename",
+        "surname": "updatesurname",
+        "company_id": "2"
+    }
     response = await client.put(f"/users/{user_id}", json=update_data)
     assert response.status_code in [200, 401, 403, 404]
 
