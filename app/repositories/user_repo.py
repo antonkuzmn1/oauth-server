@@ -39,8 +39,8 @@ class UserRepository(BaseRepository[User]):
         result = await self.db.scalars(stmt)
         return list(result.all())
 
-    async def get_by_id(self, item_id: int, *filters) -> Optional[User]:
-        base_filters = [User.id == item_id, User.deleted.is_(False)]
+    async def get_by_id(self, user_id: int, *filters) -> Optional[User]:
+        base_filters = [User.id == user_id, User.deleted.is_(False)]
         if filters:
             base_filters.extend(filters)
         stmt = (

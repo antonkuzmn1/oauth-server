@@ -3,6 +3,8 @@ from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
 from app.models.admin import Admin
 from app.models.company import admin_company_association, Company
 from app.repositories.base_repo import BaseRepository
@@ -13,15 +15,51 @@ class AdminRepository(BaseRepository[Admin]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Admin)
 
+    async def get_by_username(self, username: str, *filters) -> Optional[Admin]:
+        base_filters = [Admin.username == username, Admin.deleted.is_(False)]
+        if filters:
+            base_filters.extend(filters)
+        stmt = (
+            select(Admin)
+            .options(selectinload(Admin.companies))
+            .where(*base_filters)
+        )
+        return await self.db.scalar(stmt)
+
+    async def get_all(self, *filters) -> List[Admin]:
+        base_filters = [Admin.deleted.is_(False)]
+        if filters:
+            base_filters.extend(filters)
+        stmt = (
+            select(Admin)
+            .options(selectinload(Admin.companies))
+            .where(*base_filters)
+            .distinct()
+        )
+        result = await self.db.scalars(stmt)
+        return list(result.all())
+
+    async def get_by_id(self, admin_id: int, *filters) -> Optional[Admin]:
+        base_filters = [Admin.id == admin_id, Admin.deleted.is_(False)]
+        if filters:
+            base_filters.extend(filters)
+        stmt = (
+            select(Admin)
+            .options(selectinload(Admin.companies))
+            .where(*base_filters)
+        )
+        return await self.db.scalar(stmt)
+
     async def get_all_admins_by_company(self, company_id: int) -> List[Admin]:
         try:
-            result = await self.db.scalars(
+            stmt = (
                 select(Admin)
+                .options(selectinload(Admin.companies))
                 .join(admin_company_association)
                 .where(admin_company_association.c.company_id == company_id)
             )
-            admins = result.all()
-            return list(admins)
+            result = await self.db.scalars(stmt)
+            return list(result.all())
         except SQLAlchemyError as e:
             logger.error(f"Error fetching admins by company: {e}")
             await self.db.rollback()
@@ -29,12 +67,15 @@ class AdminRepository(BaseRepository[Admin]):
 
     async def get_all_companies_by_admin(self, admin_id: int) -> List[Company]:
         try:
-            admin = await self.db.scalar(
-                select(Admin).where(
+            stmt = (
+                select(Admin)
+                .options(selectinload(Admin.companies))
+                .where(
                     Admin.id == admin_id,
                     Admin.deleted.is_(False)
                 )
             )
+            admin = await self.db.scalar(stmt)
             return admin.companies if admin else []
         except SQLAlchemyError as e:
             logger.error(f"Error fetching companies by admin: {e}")
