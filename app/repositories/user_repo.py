@@ -15,41 +15,6 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, User)
 
-    async def get_by_username(self, username: str, *filters) -> Optional[User]:
-        base_filters = [User.username == username, User.deleted.is_(False)]
-        if filters:
-            base_filters.extend(filters)
-        stmt = (
-            select(User)
-            .options(selectinload(User.company))
-            .where(*base_filters)
-        )
-        return await self.db.scalar(stmt)
-
-    async def get_all(self, *filters) -> List[User]:
-        base_filters = [User.deleted.is_(False)]
-        if filters:
-            base_filters.extend(filters)
-        stmt = (
-            select(User)
-            .options(selectinload(User.company))
-            .where(*base_filters)
-            .distinct()
-        )
-        result = await self.db.scalars(stmt)
-        return list(result.all())
-
-    async def get_by_id(self, user_id: int, *filters) -> Optional[User]:
-        base_filters = [User.id == user_id, User.deleted.is_(False)]
-        if filters:
-            base_filters.extend(filters)
-        stmt = (
-            select(User)
-            .options(selectinload(User.company))
-            .where(*base_filters)
-        )
-        return await self.db.scalar(stmt)
-
     async def get_all_users_by_company(self, company_id: int) -> List[User]:
         try:
             stmt = (

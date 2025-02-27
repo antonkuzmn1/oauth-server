@@ -15,49 +15,14 @@ class AdminRepository(BaseRepository[Admin]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Admin)
 
-    async def get_by_username(self, username: str, *filters) -> Optional[Admin]:
-        base_filters = [Admin.username == username, Admin.deleted.is_(False)]
-        if filters:
-            base_filters.extend(filters)
-        stmt = (
-            select(Admin)
-            .options(selectinload(Admin.companies))
-            .where(*base_filters)
-        )
-        return await self.db.scalar(stmt)
-
-    async def get_all(self, *filters) -> List[Admin]:
-        base_filters = [Admin.deleted.is_(False)]
-        if filters:
-            base_filters.extend(filters)
-        stmt = (
-            select(Admin)
-            .options(selectinload(Admin.companies))
-            .where(*base_filters)
-            .distinct()
-        )
-        result = await self.db.scalars(stmt)
-        return list(result.all())
-
-    async def get_by_id(self, admin_id: int, *filters) -> Optional[Admin]:
-        base_filters = [Admin.id == admin_id, Admin.deleted.is_(False)]
-        if filters:
-            base_filters.extend(filters)
-        stmt = (
-            select(Admin)
-            .options(selectinload(Admin.companies))
-            .where(*base_filters)
-        )
-        return await self.db.scalar(stmt)
-
-    async def get_all_admins_by_company(self, company_id: int) -> List[Admin]:
+    async def get_all_admins_by_company(self, company_id: int, options=None) -> List[Admin]:
         try:
-            stmt = (
-                select(Admin)
-                .options(selectinload(Admin.companies))
-                .join(admin_company_association)
-                .where(admin_company_association.c.company_id == company_id)
-            )
+            stmt = select(Admin)
+            if options:
+                stmt = stmt.options(*options)
+            else:
+                stmt = stmt.options(selectinload(Admin.companies))
+            stmt = stmt.join(admin_company_association).where(admin_company_association.c.company_id == company_id)
             result = await self.db.scalars(stmt)
             return list(result.all())
         except SQLAlchemyError as e:
@@ -65,15 +30,16 @@ class AdminRepository(BaseRepository[Admin]):
             await self.db.rollback()
             return []
 
-    async def get_all_companies_by_admin(self, admin_id: int) -> List[Company]:
+    async def get_all_companies_by_admin(self, admin_id: int, options=None) -> List[Company]:
         try:
-            stmt = (
-                select(Admin)
-                .options(selectinload(Admin.companies))
-                .where(
-                    Admin.id == admin_id,
-                    Admin.deleted.is_(False)
-                )
+            stmt = select(Admin)
+            if options:
+                stmt = stmt.options(*options)
+            else:
+                stmt = stmt.options(selectinload(Admin.companies))
+            stmt = stmt.where(
+                Admin.id == admin_id,
+                Admin.deleted.is_(False)
             )
             admin = await self.db.scalar(stmt)
             return admin.companies if admin else []
@@ -84,7 +50,7 @@ class AdminRepository(BaseRepository[Admin]):
 
     async def add_company_to_admin(self, admin_id: int, company_id: int) -> Optional[Admin]:
         try:
-            admin = await self.get_by_id(admin_id)
+            admin = await self.get_by_id(admin_id, options=[selectinload(Admin.companies)])
             company = await self.db.scalar(
                 select(Company).where(Company.id == company_id)
             )
@@ -94,7 +60,7 @@ class AdminRepository(BaseRepository[Admin]):
 
             admin.companies.append(company)
             await self.db.commit()
-            await self.db.refresh(admin)
+            await self.db.refresh(admin, attribute_names=["companies"])
             return admin
         except SQLAlchemyError as e:
             logger.error(f"Error adding company to admin: {e}")
@@ -103,7 +69,7 @@ class AdminRepository(BaseRepository[Admin]):
 
     async def remove_company_from_admin(self, admin_id: int, company_id: int) -> Optional[Admin]:
         try:
-            admin = await self.get_by_id(admin_id)
+            admin = await self.get_by_id(admin_id, options=[selectinload(Admin.companies)])
             company = await self.db.scalar(
                 select(Company).where(Company.id == company_id)
             )
@@ -113,7 +79,7 @@ class AdminRepository(BaseRepository[Admin]):
 
             admin.companies.remove(company)
             await self.db.commit()
-            await self.db.refresh(admin)
+            await self.db.refresh(admin, attribute_names=["companies"])
             return admin
         except SQLAlchemyError as e:
             logger.error(f"Error removing company from admin: {e}")

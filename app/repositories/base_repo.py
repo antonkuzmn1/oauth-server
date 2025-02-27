@@ -17,26 +17,32 @@ class BaseRepository(AbstractRepository[T], Generic[T]):
         self.db = db
         self.model = model
 
-    async def get_by_username(self, username: str, *filters) -> Optional[T]:
+    async def get_by_username(self, username: str, *filters, options=None) -> Optional[T]:
         base_filters = [self.model.username == username, self.model.deleted.is_(False)]
         if filters:
             base_filters.extend(filters)
         stmt = select(self.model).where(*base_filters)
+        if options:
+            stmt = stmt.options(*options)
         return await self.db.scalar(stmt)
 
-    async def get_all(self, *filters) -> List[T]:
+    async def get_all(self, *filters, options=None) -> List[T]:
         base_filters = [self.model.deleted.is_(False)]
         if filters:
             base_filters.extend(filters)
         stmt = select(self.model).where(*base_filters).distinct()
+        if options:
+            stmt = stmt.options(*options)
         result = await self.db.scalars(stmt)
         return list(result.all())
 
-    async def get_by_id(self, item_id: int, *filters) -> Optional[T]:
+    async def get_by_id(self, item_id: int, *filters, options=None) -> Optional[T]:
         base_filters = [self.model.id == item_id, self.model.deleted.is_(False)]
         if filters:
             base_filters.extend(filters)
         stmt = select(self.model).where(*base_filters)
+        if options:
+            stmt = stmt.options(*options)
         return await self.db.scalar(stmt)
 
     async def create(self, item_data: dict) -> Optional[T]:

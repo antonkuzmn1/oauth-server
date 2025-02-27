@@ -17,23 +17,27 @@ class OwnerService(BaseService[OwnerRepository]):
     async def create(self, owner_data: OwnerCreate) -> Optional[OwnerOut]:
         logger.warning("OWNER_SERVICE: Attempt to create owner")
 
-        owner_data_dict = owner_data.model_dump(exclude={"password"})
-        owner_data_dict["hashed_password"] = await self.auth_service.hash_password(owner_data.password)
+        owner_data = owner_data.model_copy(
+            update={"hashed_password": await self.auth_service.hash_password(owner_data.password)}
+        )
 
-        return await super().create(owner_data_dict)
+        return await super().create(owner_data)
 
     async def update(self, owner_id: int, owner_data: OwnerUpdate) -> Optional[OwnerOut]:
         logger.warning("OWNER_SERVICE: Attempt to update owner")
+
         owner = await self.repository.get_by_id(owner_id)
         if not owner:
             logger.warning(f"Attempt to update non-existent owner: {owner_id}")
             return None
 
-        updated_owner = owner_data.model_dump(exclude_unset=True)
-        if "password" in updated_owner and updated_owner["password"]:
-            updated_owner["hashed_password"] = await self.auth_service.hash_password(updated_owner["password"])
-            del updated_owner["password"]
+        update_data = owner_data.model_dump(exclude_unset=True)
 
+        if "password" in update_data and update_data["password"]:
+            update_data["hashed_password"] = await self.auth_service.hash_password(update_data["password"])
+            del update_data["password"]
+
+        updated_owner = owner_data.model_copy(update=update_data)
         return await super().update(owner_id, updated_owner)
 
     async def authenticate_owner(self, username: str, password: str) -> Optional[Owner]:
