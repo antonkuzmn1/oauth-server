@@ -17,7 +17,11 @@ class BaseService(Generic[T]):
 
     async def create(self, data: SchemaBase) -> SchemaOut:
         logger.warning("BASE_SERVICE: Attempt to create something")
-        record = await self.repository.create(data.model_dump())
+        data_dict = data.model_dump() if hasattr(data, "model_dump") else data
+        record = await self.repository.create(data_dict)
+        if not record:
+            return None
+        record = await self.repository.get_by_id(record.id)
         return self.schema_out.model_validate(record)
 
     async def update(self, record_id: int, data: SchemaBase) -> Optional[SchemaOut]:

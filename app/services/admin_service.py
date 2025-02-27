@@ -59,10 +59,11 @@ class AdminService(BaseService[AdminRepository]):
 
     async def create(self, admin_data: AdminCreate) -> Optional[AdminOut]:
         logger.warning("ADMIN_SERVICE: Attempt to create admin")
-        admin_data = admin_data.model_copy(
-            update={"hashed_password": await self.auth_service.hash_password(admin_data.password)}
-        )
-        return await super().create(admin_data)
+        data = admin_data.model_dump()
+        if "password" in data and data["password"]:
+            data["hashed_password"] = await self.auth_service.hash_password(admin_data.password)
+            del data["password"]
+        return await super().create(data)
 
     async def update(self, admin_id: int, admin_data: AdminUpdate) -> Optional[AdminOut]:
         logger.warning("ADMIN_SERVICE: Attempt to update admin")

@@ -16,12 +16,11 @@ class OwnerService(BaseService[OwnerRepository]):
 
     async def create(self, owner_data: OwnerCreate) -> Optional[OwnerOut]:
         logger.warning("OWNER_SERVICE: Attempt to create owner")
-
-        owner_data = owner_data.model_copy(
-            update={"hashed_password": await self.auth_service.hash_password(owner_data.password)}
-        )
-
-        return await super().create(owner_data)
+        data = owner_data.model_dump()
+        if "password" in data and data["password"]:
+            data["hashed_password"] = await self.auth_service.hash_password(owner_data.password)
+            del data["password"]
+        return await super().create(data)
 
     async def update(self, owner_id: int, owner_data: OwnerUpdate) -> Optional[OwnerOut]:
         logger.warning("OWNER_SERVICE: Attempt to update owner")
