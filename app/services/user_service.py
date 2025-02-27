@@ -1,8 +1,7 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.models import User
+from app.models.user import User
 from app.repositories.user_repo import UserRepository
 from app.schemas.admin import AdminOut
 from app.schemas.user import UserOut, UserCreate, UserUpdate
@@ -20,32 +19,28 @@ class UserService(BaseService[UserRepository]):
         if not company_ids:
             return []
         filters = [User.company_id.in_(company_ids)]
-        options = [selectinload(User.company)]
-        return await super().get_all(*filters, options=options)
+        return await super().get_all(*filters)
 
     async def get_all_users_for_user(self, current_user: UserOut) -> List[UserOut]:
         company_id = current_user.company_id
         if not company_id:
             return []
         filters = [User.company_id == company_id]
-        options = [selectinload(User.company)]
-        return await super().get_all(*filters, options=options)
+        return await super().get_all(*filters)
 
     async def get_user_by_id_for_admin(self, user_id: int, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return None
         filters = [User.company_id.in_(company_ids)]
-        options = [selectinload(User.company)]
-        return await super().get_by_id(user_id, *filters, options=options)
+        return await super().get_by_id(user_id, *filters)
 
     async def get_user_by_id_for_user(self, user_id: int, current_user: UserOut) -> Optional[UserOut]:
         company_id = current_user.company_id
         if not company_id:
             return None
         filters = [User.company_id == company_id]
-        options = [selectinload(User.company)]
-        return await super().get_by_id(user_id, *filters, options=options)
+        return await super().get_by_id(user_id, *filters)
 
     async def create_by_admin(self, user: UserCreate, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
@@ -55,34 +50,20 @@ class UserService(BaseService[UserRepository]):
 
     async def update_by_admin(self, user_id: int, user_data: UserUpdate, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
-        options = [selectinload(User.company)]
-        user = await self.get_by_id(user_id, options=options)
-
-        if not user:
+        user = await self.get_by_id(user_id)
+        if not user or user.company_id not in company_ids or user_data.company_id not in company_ids:
             return None
-
-        old_company_id = user.company_id
-        if not old_company_id or old_company_id not in company_ids:
-            return None
-
-        if not user_data.company_id or user_data.company_id not in company_ids:
-            return None
-
         return await super().update(user_id, user_data)
 
     async def delete_by_admin(self, user_id: int, current_admin: AdminOut) -> Optional[UserOut]:
         company_ids = [company.id for company in current_admin.companies]
-        options = [selectinload(User.company)]
-        user = await self.get_by_id(user_id, options=options)
-
+        user = await self.get_by_id(user_id)
         if not user or user.company_id not in company_ids:
             return None
-
         return await super().delete(user_id)
 
     async def authenticate_user(self, username: str, password: str):
         user = await self.repository.get_by_username(username)
-
         if not user or user.password != password:
             return None
         return user

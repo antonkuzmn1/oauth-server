@@ -2,7 +2,7 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Company
+from app.models.company import Company
 from app.models.admin import admin_company_association
 from app.repositories.company_repo import CompanyRepository
 from app.schemas.admin import AdminOut

@@ -1,6 +1,6 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+
 
 from app.repositories.admin_repo import AdminRepository
 from app.schemas.user import UserOut
@@ -25,8 +25,7 @@ class AdminService(BaseService[AdminRepository]):
             admin_company_association.c.company_id.in_(company_ids),
             admin_company_association.c.admin_id == Admin.id,
         ]
-        options = [selectinload(Admin.companies)]
-        return await super().get_all(*filters, options=options)
+        return await super().get_all(*filters)
 
     async def get_admin_by_id_for_admin(self, admin_id: int, current_admin: AdminOut) -> Optional[AdminOut]:
         company_ids = [company.id for company in current_admin.companies]
@@ -36,8 +35,7 @@ class AdminService(BaseService[AdminRepository]):
             admin_company_association.c.company_id.in_(company_ids),
             admin_company_association.c.admin_id == Admin.id,
         ]
-        options = [selectinload(Admin.companies)]
-        return await super().get_by_id(admin_id, *filters, options=options)
+        return await super().get_by_id(admin_id, *filters)
 
     async def get_all_admins_for_user(self, current_user: UserOut) -> List[AdminOut]:
         company_id = current_user.company_id
@@ -47,8 +45,7 @@ class AdminService(BaseService[AdminRepository]):
             admin_company_association.c.company_id == company_id,
             admin_company_association.c.admin_id == Admin.id,
         ]
-        options = [selectinload(Admin.companies)]
-        return await super().get_all(*filters, options=options)
+        return await super().get_all(*filters)
 
     async def get_admin_by_id_for_user(self, admin_id: int, current_user: UserOut) -> Optional[AdminOut]:
         company_id = current_user.company_id
@@ -58,8 +55,7 @@ class AdminService(BaseService[AdminRepository]):
             admin_company_association.c.company_id == company_id,
             admin_company_association.c.admin_id == Admin.id,
         ]
-        options = [selectinload(Admin.companies)]
-        return await super().get_by_id(admin_id, *filters, options=options)
+        return await super().get_by_id(admin_id, *filters)
 
     async def create(self, admin_data: AdminCreate) -> Optional[AdminOut]:
         logger.warning("ADMIN_SERVICE: Attempt to create admin")
@@ -70,14 +66,12 @@ class AdminService(BaseService[AdminRepository]):
 
     async def update(self, admin_id: int, admin_data: AdminUpdate) -> Optional[AdminOut]:
         logger.warning("ADMIN_SERVICE: Attempt to update admin")
-
-        admin = await self.repository.get_by_id(admin_id, options=[selectinload(Admin.companies)])
+        admin = await self.repository.get_by_id(admin_id)
         if not admin:
             logger.warning(f"Attempt to update non-existent admin: {admin_id}")
             return None
 
         update_data = admin_data.model_dump(exclude_unset=True)
-
         if "password" in update_data and update_data["password"]:
             update_data["hashed_password"] = await self.auth_service.hash_password(update_data["password"])
             del update_data["password"]
