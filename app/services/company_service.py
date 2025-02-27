@@ -34,6 +34,6 @@ class CompanyService(BaseService[CompanyRepository]):
         company_ids = [company.id for company in current_admin.companies]
         if not company_ids:
             return None
-        filters = [admin_company_association.c.company_id.in_(company_ids)]
+        filters = [Company.id.in_(company_ids)]
         options = [selectinload(Company.admins)]
         return await super().get_by_id(company_id, *filters, options=options)
