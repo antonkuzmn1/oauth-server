@@ -16,12 +16,20 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/profile", response_model=UserOut)
 async def get_user_profile(
-        current_user: Annotated[UserOut, Depends(get_current_user)],
+        current_owner: Optional[OwnerOut] = Depends(get_current_owner),
+        current_admin: Optional[AdminOut] = Depends(get_current_admin),
+        current_user: Optional[UserOut] = Depends(get_current_user),
 ):
+    if current_admin or current_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
     if current_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail="Not authenticated",
         )
 
     return current_user
@@ -79,6 +87,7 @@ async def create_user(
         user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
+        current_user: Optional[UserOut] = Depends(get_current_user),
 ):
 
     if current_owner:
@@ -86,6 +95,12 @@ async def create_user(
 
     if current_admin:
         return await user_service.create_by_admin(user, current_admin)
+
+    if current_user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -100,6 +115,7 @@ async def update_user(
         user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
+        current_user: Optional[UserOut] = Depends(get_current_user),
 ):
 
 
@@ -108,6 +124,12 @@ async def update_user(
 
     if current_admin:
         return await user_service.update_by_admin(user_id, user, current_admin)
+
+    if current_user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -121,12 +143,19 @@ async def delete_user(
         user_service: UserService = Depends(get_user_service),
         current_owner: Optional[OwnerOut] = Depends(get_current_owner),
         current_admin: Optional[AdminOut] = Depends(get_current_admin),
+        current_user: Optional[UserOut] = Depends(get_current_user),
 ):
     if current_owner:
         return await user_service.delete(user_id)
 
     if current_admin:
         return await user_service.delete_by_admin(user_id, current_admin)
+
+    if current_user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -138,7 +167,15 @@ async def delete_user(
 async def login_for_user_access_token(
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         user_service: UserService = Depends(get_user_service),
+        current_owner: Optional[OwnerOut] = Depends(get_current_owner),
+        current_admin: Optional[AdminOut] = Depends(get_current_admin),
+        current_user: Optional[UserOut] = Depends(get_current_user),
 ):
+    if current_owner or current_admin or current_user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
 
     user = await user_service.authenticate_user(form_data.username, form_data.password)
 
