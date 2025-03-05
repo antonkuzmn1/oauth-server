@@ -38,7 +38,7 @@ async def test_db():
         await session.commit()
         await session.refresh(company)
 
-        user = User(username="TestUser", name="Test User",
+        user = User(username="testuser", name="TestName",
                     surname="TestSurname", password="testpassword",
                     company_id=1)
         session.add(user)

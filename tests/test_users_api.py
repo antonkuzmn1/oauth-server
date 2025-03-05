@@ -93,6 +93,6 @@ async def test_delete_user(client: AsyncClient, role_fixture, expected_status):
 ], indirect=["role_fixture"])
 @pytest.mark.asyncio
 async def test_login(client: AsyncClient, role_fixture, expected_status):
-    login_data = {"username": "testuser", "password": "securepassword"}
+    login_data = {"username": "testuser", "password": "testpassword"}
     response = await client.post("/users/login", data=login_data)
     assert response.status_code == expected_status
