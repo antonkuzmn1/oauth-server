@@ -90,7 +90,7 @@ class AdminService(BaseService[AdminRepository]):
 
     async def authenticate_admin(self, username: str, password: str) -> Optional[Admin]:
         admin = await self.repository.get_by_username(username)
-        if not admin or not self.auth_service.verify_password(password, admin.hashed_password):
+        if not admin or not await self.auth_service.verify_password(password, admin.hashed_password):
             logger.warning("Failed to authenticate admin")
             return None
         return admin
